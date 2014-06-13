@@ -1,0 +1,10 @@
+{
+  "name": "process_manager",
+  "version": "0.0.1",
+  "dependencies": {
+    "mongoose": "*",
+    "underscore": "*",
+    "zmq": "onicollet/zmq",
+    "optimist":"*"
+  }
+}
