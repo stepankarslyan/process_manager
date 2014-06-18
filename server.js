@@ -1,9 +1,10 @@
 var _ = require("underscore");
 var mongoose = require("mongoose");
-mongoose.connect("mongodb://localhost/test");
+mongoose.connect("mongodb://192.168.0.107/test");
+console.log("Connecting to mongo db");
 var zmq = require("zmq");
 var argv = require("optimist")
-  .default({bind: "tcp:*5555", conn: "tcp://localhost:6666"}).argv;
+  .default({bind: "tcp://*:5555", conn: "tcp://localhost:6666"}).argv;
 
 var responder = zmq.socket("asyncrep");
 responder.bind(argv.bind);
@@ -16,7 +17,8 @@ var schema = new mongoose.Schema({
     id: String,
     name: String,
     cmd: String,
-    params: Array
+    params: Array,
+    auto: Boolean
 });
 
 var Process = mongoose.model("Process", schema);
@@ -32,16 +34,22 @@ responder.on("message", function(buffer, response) {
     if(process.id == "" || process.name == "" || process.cmd == "" || process.params == "") {
       response.send(500, "Fill the required fields!");
     }else{
-      
-      process.save(function(error, dbProcess) {
+      Process.find({id: process.id}, function(error, dbProcesses) {
+        if(dbProcesses.length > 0) {
+          response.send(500, "Id is the same");         
+        }
+        else {
+          process.save(function(error, dbProcess) {
 
-        if(error) {
-          console.log("error" + error);
-        }else{
-          console.log("Mongodb sends: " + dbProcess);
-        }   
-        
-        response.send("Process was saved!");
+            if(error) {
+              console.log("error" + error);
+            }else{
+              console.log("Mongodb sends: " + dbProcess);
+            }   
+            
+            response.send("Process was saved!");
+          });
+        }
       });
     }
   }  
@@ -50,6 +58,9 @@ responder.on("message", function(buffer, response) {
 
 responder.on("message", function(data, response) {
   var request = JSON.parse(data.toString());
+  
+  console.log("Received data : " + data.toString());
+  
   if(request.type == "get") {
     
     Process.find(function(error, processes) {
@@ -58,6 +69,7 @@ responder.on("message", function(data, response) {
         response.send(error);
       }else{
         console.log("Mongodb sends: " + " " + processes);
+        console.log("Reply data : " + data.toString());
         response.send(processes);
       }
     });
@@ -94,5 +106,5 @@ responder.on("message", function(buffer, response) {
       }
     });
   }
-
+  
 });
