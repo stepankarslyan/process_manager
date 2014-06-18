@@ -1,6 +1,6 @@
 var _ = require("underscore");
 var mongoose = require("mongoose");
-mongoose.connect("mongodb://192.168.0.107/test");
+mongoose.connect("mongodb://localhost/test");
 console.log("Connecting to mongo db");
 var zmq = require("zmq");
 var argv = require("optimist")
